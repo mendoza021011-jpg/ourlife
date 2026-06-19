@@ -1,0 +1,351 @@
+/**
+ * OURLIFE 01 - Core Setup
+ * Core constants, helper functions, formatting, role checks, and safe utilities.
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+/* =====================================================
+ * CONSTANTS
+ * ===================================================== */
+
+if (!defined('OURLIFE_VERSION')) {
+    define('OURLIFE_VERSION', '1.0.0');
+}
+
+if (!defined('OURLIFE_PREFIX')) {
+    define('OURLIFE_PREFIX', 'ourlife');
+}
+
+if (!defined('OURLIFE_CURRENCY')) {
+    define('OURLIFE_CURRENCY', '₱');
+}
+
+/* =====================================================
+ * ROLE SLUGS
+ * ===================================================== */
+
+if (!defined('OURLIFE_ROLE_CONSUMER')) {
+    define('OURLIFE_ROLE_CONSUMER', 'ourlife_consumer');
+}
+
+if (!defined('OURLIFE_ROLE_AGENT')) {
+    define('OURLIFE_ROLE_AGENT', 'ourlife_agent');
+}
+
+if (!defined('OURLIFE_ROLE_PROVIDER')) {
+    define('OURLIFE_ROLE_PROVIDER', 'ourlife_provider');
+}
+
+if (!defined('OURLIFE_ROLE_ADMIN')) {
+    define('OURLIFE_ROLE_ADMIN', 'ourlife_admin');
+}
+
+/* =====================================================
+ * POST TYPE SLUGS
+ * ===================================================== */
+
+if (!defined('OURLIFE_CPT_PROVIDER')) {
+    define('OURLIFE_CPT_PROVIDER', 'ourlife_provider');
+}
+
+if (!defined('OURLIFE_CPT_AGENT')) {
+    define('OURLIFE_CPT_AGENT', 'ourlife_agent');
+}
+
+if (!defined('OURLIFE_CPT_LISTING')) {
+    define('OURLIFE_CPT_LISTING', 'ourlife_listing');
+}
+
+if (!defined('OURLIFE_CPT_RESOURCE')) {
+    define('OURLIFE_CPT_RESOURCE', 'ourlife_resource');
+}
+
+if (!defined('OURLIFE_CPT_PACKAGE')) {
+    define('OURLIFE_CPT_PACKAGE', 'ourlife_package');
+}
+
+/* =====================================================
+ * TAXONOMY SLUGS
+ * ===================================================== */
+
+if (!defined('OURLIFE_TAX_LISTING_CATEGORY')) {
+    define('OURLIFE_TAX_LISTING_CATEGORY', 'ourlife_listing_category');
+}
+
+if (!defined('OURLIFE_TAX_LISTING_TYPE')) {
+    define('OURLIFE_TAX_LISTING_TYPE', 'ourlife_listing_type');
+}
+
+if (!defined('OURLIFE_TAX_PROVIDER_TYPE')) {
+    define('OURLIFE_TAX_PROVIDER_TYPE', 'ourlife_provider_type');
+}
+
+if (!defined('OURLIFE_TAX_AGENT_SPECIALIZATION')) {
+    define('OURLIFE_TAX_AGENT_SPECIALIZATION', 'ourlife_agent_specialization');
+}
+
+if (!defined('OURLIFE_TAX_LOCATION')) {
+    define('OURLIFE_TAX_LOCATION', 'ourlife_location');
+}
+
+if (!defined('OURLIFE_TAX_PRICE_RANGE')) {
+    define('OURLIFE_TAX_PRICE_RANGE', 'ourlife_price_range');
+}
+
+/* =====================================================
+ * BASIC HELPERS
+ * ===================================================== */
+
+if (!function_exists('ourlife_clean_text')) {
+    function ourlife_clean_text($value) {
+        return sanitize_text_field(wp_unslash($value));
+    }
+}
+
+if (!function_exists('ourlife_clean_textarea')) {
+    function ourlife_clean_textarea($value) {
+        return sanitize_textarea_field(wp_unslash($value));
+    }
+}
+
+if (!function_exists('ourlife_clean_email')) {
+    function ourlife_clean_email($value) {
+        return sanitize_email(wp_unslash($value));
+    }
+}
+
+if (!function_exists('ourlife_clean_url')) {
+    function ourlife_clean_url($value) {
+        return esc_url_raw(wp_unslash($value));
+    }
+}
+
+if (!function_exists('ourlife_clean_number')) {
+    function ourlife_clean_number($value) {
+        $value = preg_replace('/[^0-9.]/', '', (string) $value);
+        return $value === '' ? 0 : floatval($value);
+    }
+}
+
+/* =====================================================
+ * CURRENCY FORMATTER
+ * ===================================================== */
+
+if (!function_exists('ourlife_format_price')) {
+    function ourlife_format_price($amount, $show_zero = false) {
+        $amount = ourlife_clean_number($amount);
+
+        if ($amount <= 0 && !$show_zero) {
+            return 'Price upon request';
+        }
+
+        return OURLIFE_CURRENCY . number_format($amount, 0);
+    }
+}
+
+/* =====================================================
+ * USER HELPERS
+ * ===================================================== */
+
+if (!function_exists('ourlife_current_user_has_role')) {
+    function ourlife_current_user_has_role($role) {
+        if (!is_user_logged_in()) {
+            return false;
+        }
+
+        $user = wp_get_current_user();
+
+        return in_array($role, (array) $user->roles, true);
+    }
+}
+
+if (!function_exists('ourlife_is_consumer')) {
+    function ourlife_is_consumer($user_id = 0) {
+        $user = $user_id ? get_user_by('id', $user_id) : wp_get_current_user();
+        return $user && in_array(OURLIFE_ROLE_CONSUMER, (array) $user->roles, true);
+    }
+}
+
+if (!function_exists('ourlife_is_agent')) {
+    function ourlife_is_agent($user_id = 0) {
+        $user = $user_id ? get_user_by('id', $user_id) : wp_get_current_user();
+        return $user && in_array(OURLIFE_ROLE_AGENT, (array) $user->roles, true);
+    }
+}
+
+if (!function_exists('ourlife_is_provider')) {
+    function ourlife_is_provider($user_id = 0) {
+        $user = $user_id ? get_user_by('id', $user_id) : wp_get_current_user();
+        return $user && in_array(OURLIFE_ROLE_PROVIDER, (array) $user->roles, true);
+    }
+}
+
+if (!function_exists('ourlife_is_marketplace_admin')) {
+    function ourlife_is_marketplace_admin($user_id = 0) {
+        $user = $user_id ? get_user_by('id', $user_id) : wp_get_current_user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return user_can($user, 'manage_options') || in_array(OURLIFE_ROLE_ADMIN, (array) $user->roles, true);
+    }
+}
+
+/* =====================================================
+ * META HELPERS
+ * ===================================================== */
+
+if (!function_exists('ourlife_get_meta')) {
+    function ourlife_get_meta($post_id, $key, $default = '') {
+        $value = get_post_meta($post_id, $key, true);
+        return $value !== '' ? $value : $default;
+    }
+}
+
+if (!function_exists('ourlife_update_meta')) {
+    function ourlife_update_meta($post_id, $key, $value) {
+        return update_post_meta($post_id, $key, $value);
+    }
+}
+
+/* =====================================================
+ * STATUS HELPERS
+ * ===================================================== */
+
+if (!function_exists('ourlife_status_label')) {
+    function ourlife_status_label($status) {
+        $labels = [
+            'pending'   => 'Pending',
+            'verified'  => 'Verified',
+            'rejected'  => 'Rejected',
+            'suspended' => 'Suspended',
+            'published' => 'Published',
+            'archived'  => 'Archived',
+            'unclaimed' => 'Unclaimed',
+        ];
+
+        return isset($labels[$status]) ? $labels[$status] : ucfirst((string) $status);
+    }
+}
+
+/* =====================================================
+ * BADGE HELPERS
+ * ===================================================== */
+
+if (!function_exists('ourlife_verified_badge')) {
+    function ourlife_verified_badge($label = 'Verified') {
+        return '<span class="ourlife-badge ourlife-badge-verified">✓ ' . esc_html($label) . '</span>';
+    }
+}
+
+if (!function_exists('ourlife_unclaimed_badge')) {
+    function ourlife_unclaimed_badge() {
+        return '<span class="ourlife-badge ourlife-badge-unclaimed">Unclaimed</span>';
+    }
+}
+
+/* =====================================================
+ * LOCATION HELPER
+ * ===================================================== */
+
+if (!function_exists('ourlife_format_location')) {
+    function ourlife_format_location($city = '', $province = '') {
+        $parts = array_filter([
+            sanitize_text_field($city),
+            sanitize_text_field($province),
+        ]);
+
+        return implode(', ', $parts);
+    }
+}
+
+/* =====================================================
+ * NONCE HELPERS
+ * ===================================================== */
+
+if (!function_exists('ourlife_nonce_field')) {
+    function ourlife_nonce_field($action = 'ourlife_action') {
+        return wp_nonce_field($action, '_ourlife_nonce', true, false);
+    }
+}
+
+if (!function_exists('ourlife_verify_nonce')) {
+    function ourlife_verify_nonce($action = 'ourlife_action') {
+        if (empty($_POST['_ourlife_nonce'])) {
+            return false;
+        }
+
+        return wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_ourlife_nonce'])), $action);
+    }
+}
+
+/* =====================================================
+ * BASIC FRONTEND STYLES
+ * ===================================================== */
+
+add_action('wp_head', function () {
+    ?>
+    <style>
+        .ourlife-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .ourlife-badge-verified {
+            background: #EEF4EC;
+            color: #4CAF50;
+        }
+
+        .ourlife-badge-unclaimed {
+            background: #F8E9C8;
+            color: #9A6B00;
+        }
+
+        .ourlife-card {
+            background: #FFFFFF;
+            border: 1px solid #E4E7EC;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .ourlife-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 48px;
+            padding: 0 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: 0;
+        }
+
+        .ourlife-btn-primary {
+            background: #17324D;
+            color: #FFFFFF;
+        }
+
+        .ourlife-btn-secondary {
+            background: #FFFFFF;
+            color: #17324D;
+            border: 1px solid #17324D;
+        }
+
+        .ourlife-muted {
+            color: #667085;
+        }
+    </style>
+    <?php
+});
